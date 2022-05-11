@@ -27,8 +27,9 @@ def create_2Dgrid_cyl(center=[0.,0.],rbounds=[1.0e-3,6.],nr=500,nt=360):
 # optionnel center. Par defaut il est en [0,0]
     
 def cart2cyl(grid,center=[0,0]):
+    print(np.rad2deg(grid['alpha']))
     rad = np.sqrt((grid['x'] - center[0])**2 + (grid['y'] - center[1])**2)
-    theta = np.arctan2(grid['y']-center[1],grid['x']-center[0])
+    theta = np.arctan2(grid['y']-center[1],grid['x']-center[0]) - grid['alpha']
     return rad,theta
 
 
@@ -39,17 +40,18 @@ def cart2cyl(grid,center=[0,0]):
 # la fonction courant psi, la fonction potentielle phi, les composantes de vitesse
 
 
-# Ecoulement uniforme (sans incidence)
+# Ecoulement uniforme d'incidence alpha en RADIANS ! 
 
-def uniform(grid,Vinf):
+def uniform(grid,Vinf,alpha):
   ecoulement = dict()
   
+  grid['alpha'] = alpha
   rad,theta = cart2cyl(grid,center=[0.,0.])
   
-  ecoulement['phi'] = Vinf*grid['x']
-  ecoulement['psi'] = Vinf*grid['y']
-  ecoulement['u'] = Vinf * np.ones_like(rad)
-  ecoulement['v'] = np.zeros_like(rad)
+  ecoulement['phi'] = Vinf*np.cos(alpha)*grid['x'] + Vinf*np.sin(alpha)*grid['y']
+  ecoulement['psi'] = -Vinf*np.sin(alpha)*grid['x'] + Vinf*np.cos(alpha)*grid['y']
+  ecoulement['u'] = Vinf * np.cos(alpha)* np.ones_like(rad)
+  ecoulement['v'] = Vinf * np.sin(alpha)* np.ones_like(rad)
   ecoulement['ur'] = ecoulement['u'] * np.cos(theta) + ecoulement['v'] * np.sin(theta) 
   ecoulement['ut'] = -ecoulement['u'] * np.sin(theta) + ecoulement['v'] * np.cos(theta) 
   
