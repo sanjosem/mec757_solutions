@@ -27,7 +27,6 @@ def create_2Dgrid_cyl(center=[0.,0.],rbounds=[1.0e-3,6.],nr=500,nt=360):
 # optionnel center. Par defaut il est en [0,0]
     
 def cart2cyl(grid,center=[0,0]):
-    print(np.rad2deg(grid['alpha']))
     rad = np.sqrt((grid['x'] - center[0])**2 + (grid['y'] - center[1])**2)
     theta = np.arctan2(grid['y']-center[1],grid['x']-center[0]) - grid['alpha']
     return rad,theta
@@ -43,70 +42,70 @@ def cart2cyl(grid,center=[0,0]):
 # Ecoulement uniforme d'incidence alpha en RADIANS ! 
 
 def uniform(grid,Vinf,alpha):
-  ecoulement = dict()
-  
-  grid['alpha'] = alpha
-  rad,theta = cart2cyl(grid,center=[0.,0.])
-  
-  ecoulement['phi'] = Vinf*np.cos(alpha)*grid['x'] + Vinf*np.sin(alpha)*grid['y']
-  ecoulement['psi'] = -Vinf*np.sin(alpha)*grid['x'] + Vinf*np.cos(alpha)*grid['y']
-  ecoulement['u'] = Vinf * np.cos(alpha)* np.ones_like(rad)
-  ecoulement['v'] = Vinf * np.sin(alpha)* np.ones_like(rad)
-  ecoulement['ur'] = ecoulement['u'] * np.cos(theta) + ecoulement['v'] * np.sin(theta) 
-  ecoulement['ut'] = -ecoulement['u'] * np.sin(theta) + ecoulement['v'] * np.cos(theta) 
-  
-  return ecoulement
+    ecoulement = dict()
+
+    grid['alpha'] = alpha
+    rad,theta = cart2cyl(grid,center=[0.,0.])
+
+    ecoulement['phi'] = Vinf*np.cos(alpha)*grid['x'] + Vinf*np.sin(alpha)*grid['y']
+    ecoulement['psi'] = -Vinf*np.sin(alpha)*grid['x'] + Vinf*np.cos(alpha)*grid['y']
+    ecoulement['u'] = Vinf * np.cos(alpha)* np.ones_like(rad)
+    ecoulement['v'] = Vinf * np.sin(alpha)* np.ones_like(rad)
+    ecoulement['ur'] = ecoulement['u'] * np.cos(theta) + ecoulement['v'] * np.sin(theta) 
+    ecoulement['ut'] = -ecoulement['u'] * np.sin(theta) + ecoulement['v'] * np.cos(theta) 
+
+    return ecoulement
 
 
 # Source ponctuelle
 
 def source(grid,La,center=[0,0]):
-  ecoulement = dict()
-  
-  rad,theta = cart2cyl(grid,center)
-  
-  ecoulement['phi'] = La/(2*np.pi) * np.log(rad)
-  ecoulement['psi'] = La/(2*np.pi) * theta
-  ecoulement['ur'] = La/(2*np.pi*rad) 
-  ecoulement['ut'] = np.zeros_like(rad)
-  ecoulement['u'] = ecoulement['ur'] * np.cos(theta) - ecoulement['ut'] * np.sin(theta)
-  ecoulement['v'] = ecoulement['ur'] * np.sin(theta) + ecoulement['ut'] * np.cos(theta)
-  
-  return ecoulement
+    ecoulement = dict()
+
+    rad,theta = cart2cyl(grid,center)
+
+    ecoulement['phi'] = La/(2*np.pi) * np.log(rad)
+    ecoulement['psi'] = La/(2*np.pi) * theta
+    ecoulement['ur'] = La/(2*np.pi*rad) 
+    ecoulement['ut'] = np.zeros_like(rad)
+    ecoulement['u'] = ecoulement['ur'] * np.cos(theta) - ecoulement['ut'] * np.sin(theta)
+    ecoulement['v'] = ecoulement['ur'] * np.sin(theta) + ecoulement['ut'] * np.cos(theta)
+
+    return ecoulement
 
 
 # Dipole ponctuel
 
 def dipole(grid,Ka,center=[0,0]):
-  ecoulement = dict()
-  
-  rad,theta = cart2cyl(grid,center)
-  
-  ecoulement['phi'] = Ka/(2*np.pi) * np.cos(theta)/rad
-  ecoulement['psi'] = -Ka/(2*np.pi) * np.sin(theta)/rad
-  ecoulement['ur'] = -Ka/(2*np.pi) * np.cos(theta)/rad**2
-  ecoulement['ut'] = -Ka/(2*np.pi) * np.sin(theta)/rad**2
-  ecoulement['u'] = ecoulement['ur'] * np.cos(theta) - ecoulement['ut'] * np.sin(theta)
-  ecoulement['v'] = ecoulement['ur'] * np.sin(theta) + ecoulement['ut'] * np.cos(theta)
+    ecoulement = dict()
 
-  return ecoulement
+    rad,theta = cart2cyl(grid,center)
+
+    ecoulement['phi'] = Ka/(2*np.pi) * np.cos(theta)/rad
+    ecoulement['psi'] = -Ka/(2*np.pi) * np.sin(theta)/rad
+    ecoulement['ur'] = -Ka/(2*np.pi) * np.cos(theta)/rad**2
+    ecoulement['ut'] = -Ka/(2*np.pi) * np.sin(theta)/rad**2
+    ecoulement['u'] = ecoulement['ur'] * np.cos(theta) - ecoulement['ut'] * np.sin(theta)
+    ecoulement['v'] = ecoulement['ur'] * np.sin(theta) + ecoulement['ut'] * np.cos(theta)
+
+    return ecoulement
 
 
 # Tourbillon ponctuel
 
 def tourbillon(grid,Ga,center=[0,0],R0=1.0):
-  ecoulement = dict()
-  
-  rad,theta = cart2cyl(grid,center)
-  
-  ecoulement['phi'] = -Ga/(2*np.pi) * theta
-  ecoulement['psi'] = Ga/(2*np.pi) * np.log(rad/R0)
-  ecoulement['ur'] = np.zeros_like(rad)
-  ecoulement['ut'] = - Ga/(2*np.pi * rad)
-  ecoulement['u'] = ecoulement['ur'] * np.cos(theta) - ecoulement['ut'] * np.sin(theta)
-  ecoulement['v'] = ecoulement['ur'] * np.sin(theta) + ecoulement['ut'] * np.cos(theta)
-  
-  return ecoulement
+    ecoulement = dict()
+
+    rad,theta = cart2cyl(grid,center)
+
+    ecoulement['phi'] = -Ga/(2*np.pi) * theta
+    ecoulement['psi'] = Ga/(2*np.pi) * np.log(rad/R0)
+    ecoulement['ur'] = np.zeros_like(rad)
+    ecoulement['ut'] = - Ga/(2*np.pi * rad)
+    ecoulement['u'] = ecoulement['ur'] * np.cos(theta) - ecoulement['ut'] * np.sin(theta)
+    ecoulement['v'] = ecoulement['ur'] * np.sin(theta) + ecoulement['ut'] * np.cos(theta)
+
+    return ecoulement
 
 
 # Fonction pour calculer les coordonneers polaire a partir des coordonnees cartesienne
