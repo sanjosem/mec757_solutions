@@ -13,13 +13,14 @@ def create_2Dgrid_cart(xbounds=[-5.,5.],ybounds=[-3.,3],nx=500,ny=300):
     grid['x'],grid['y'] = np.meshgrid(x,y)
     return grid
     
-def create_2Dgrid_cyl(center=[0.,0.],rbounds=[1.0e-3,6.],nr=500,nt=360):
+def create_2Dgrid_cyl(center=[0.,0.],alpha=0.0,rbounds=[1.0e-3,6.],nr=500,nt=360):
     grid = dict()
     rad = np.linspace(rbounds[0],rbounds[1],nr)
     theta = np.linspace(0,2*np.pi,nt)
     R,T = np.meshgrid(rad,theta)
-    grid['x'] = R * np.cos(T) + center[0]
-    grid['y'] = R * np.sin(T) + center[1]
+    grid['x'] = R * np.cos(T + alpha) + center[0]
+    grid['y'] = R * np.sin(T + alpha) + center[1]
+    grid['alpha'] = alpha
     return grid
 
 # Fonction pour calculer les coordonneers polaire a partir des coordonnees cartesienne
@@ -27,8 +28,13 @@ def create_2Dgrid_cyl(center=[0.,0.],rbounds=[1.0e-3,6.],nr=500,nt=360):
 # optionnel center. Par defaut il est en [0,0]
     
 def cart2cyl(grid,center=[0,0]):
+    if 'alpha' in grid.keys():
+        alpha = grid['alpha']
+    else:
+        alpha = 0.
+    # print(f"Using AoA: {alpha} rad")
     rad = np.sqrt((grid['x'] - center[0])**2 + (grid['y'] - center[1])**2)
-    theta = np.arctan2(grid['y']-center[1],grid['x']-center[0]) - grid['alpha']
+    theta = np.arctan2(grid['y']-center[1],grid['x']-center[0]) - alpha
     return rad,theta
 
 
@@ -41,16 +47,19 @@ def cart2cyl(grid,center=[0,0]):
 
 # Ecoulement uniforme d'incidence alpha en RADIANS ! 
 
-def uniform(grid,Vinf,alpha):
+def uniform(grid,Vinf,center=[0.,0.]):
     ecoulement = dict()
 
-    grid['alpha'] = alpha
-    rad,theta = cart2cyl(grid,center=[0.,0.])
+    if 'alpha' in grid.keys():
+        alpha = grid['alpha']
+    else:
+        alpha = 0.
+    rad,theta = cart2cyl(grid,center)
 
-    ecoulement['phi'] = Vinf*np.cos(alpha)*grid['x'] + Vinf*np.sin(alpha)*grid['y']
-    ecoulement['psi'] = -Vinf*np.sin(alpha)*grid['x'] + Vinf*np.cos(alpha)*grid['y']
-    ecoulement['u'] = Vinf * np.cos(alpha)* np.ones_like(rad)
-    ecoulement['v'] = Vinf * np.sin(alpha)* np.ones_like(rad)
+    ecoulement['phi'] = Vinf*np.cos(alpha)*(grid['x']-center[0]) + Vinf*np.sin(alpha)*(grid['y']-center[1])
+    ecoulement['psi'] = -Vinf*np.sin(alpha)*(grid['x']-center[0]) + Vinf*np.cos(alpha)*(grid['y']-center[1])
+    ecoulement['u'] = Vinf * np.ones_like(rad)
+    ecoulement['v'] = np.zeros_like(rad)
     ecoulement['ur'] = ecoulement['u'] * np.cos(theta) + ecoulement['v'] * np.sin(theta) 
     ecoulement['ut'] = -ecoulement['u'] * np.sin(theta) + ecoulement['v'] * np.cos(theta) 
 
@@ -120,3 +129,25 @@ def superpose_ecoulement(ecoul1,ecoul2,grid):
     ecoulement['ur'] = ecoulement['u'] * np.cos(theta) + ecoulement['v'] * np.sin(theta) 
     ecoulement['ut'] = - ecoulement['u'] * np.sin(theta) + ecoulement['v'] * np.cos(theta) 
     return ecoulement
+
+def create_cylinder_flow(grid,Vinf=1.0,Kappa=1.0,Gamma=0.0,
+                         center=[0.,0.],R0=1.0):
+    
+    # Alpha must be provided in the grid
+    if 'alpha' not in grid.keys():
+        raise RuntimeError('No alpha set with the grid')
+    else: 
+        alpha = grid['alpha']
+    print(f"Uniform flow around cylinder with :")
+    print(f"     -> Vinf {Vinf:.2f} m/s")
+    print(f"     -> AoA {alpha:.2f} rad")
+    print(f"Circulation around cylinder:")
+    print(f"     -> Gamma {Gamma:.2f} m2/s")
+    unif = uniform(grid,Vinf,center=center)
+    dipol = dipole(grid,Kappa,center=center)
+    tourb = tourbillon(grid,Gamma,R0=R0,center=center)
+    ecoul = superpose_ecoulement(unif,dipol,grid)
+    ecoul = superpose_ecoulement(ecoul,tourb,grid)
+    ecoul['V'] = (ecoul['u']**2 + ecoul['v']**2)**0.5
+    ecoul['Cp'] = 1 - (ecoul['V']/Vinf)**2
+    return ecoul
