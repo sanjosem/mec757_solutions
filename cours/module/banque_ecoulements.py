@@ -131,18 +131,19 @@ def superpose_ecoulement(ecoul1,ecoul2,grid):
     return ecoulement
 
 def create_cylinder_flow(grid,Vinf=1.0,Kappa=1.0,Gamma=0.0,
-                         center=[0.,0.],R0=1.0):
+                         center=[0.,0.],R0=1.0,verbose=False):
     
     # Alpha must be provided in the grid
     if 'alpha' not in grid.keys():
         raise RuntimeError('No alpha set with the grid')
     else: 
         alpha = grid['alpha']
-    print(f"Uniform flow around cylinder with :")
-    print(f"     -> Vinf {Vinf:.2f} m/s")
-    print(f"     -> AoA {alpha:.2f} rad")
-    print(f"Circulation around cylinder:")
-    print(f"     -> Gamma {Gamma:.2f} m2/s")
+    if verbose:    
+        print(f"Uniform flow around cylinder with :")
+        print(f"     -> Vinf {Vinf:.2f} m/s")
+        print(f"     -> AoA {alpha:.2f} rad")
+        print(f"Circulation around cylinder:")
+        print(f"     -> Gamma {Gamma:.2f} m2/s")
     unif = uniform(grid,Vinf,center=center)
     dipol = dipole(grid,Kappa,center=center)
     tourb = tourbillon(grid,Gamma,R0=R0,center=center)
